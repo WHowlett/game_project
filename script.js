@@ -59,17 +59,27 @@ var banana;
 var score = 0;
 var scoreText;
 var death;
-
-
-
+var opentune;//opening sound
+var hopping//Sound for hopping
+var eat; //Sound for eating
+var birdCry; //Bird Cry
+var gamesound; //background music to play during the game
+var lostsound; // losing sound
+var winnersound;
 
 //Begining Scene
 function preintro() {
   this.load.image('intro', 'asset/intobackground.jpg');
+  this.load.audio('opening', 'sound/opening.mp3');
 };
 function createintro() {
   this.add.image(500, 400, "intro");
-
+  opentune = this.sound.add('opening');
+  opentune.play({
+    volume: 0.8,
+    loop: true
+  });
+  score = 0; // added to ensure score reset back to 0
   let titletext = this.add.text( 275, 275, ['Bunny Survival Game'], 
     { 
       fontFamily: '"Press Start 2P",cursive', 
@@ -114,10 +124,19 @@ function mypreload1 () {
         'asset/bunny-hop-spritesheet.png',
         { frameWidth: 48, frameHeight: 32 }
     );
+  this.load.audio('hop', 'sound/hop.wav');
+  this.load.audio('eat', 'sound/crunch.ogg');
+  this.load.audio('cry', 'sound/cry.wav');
+  this.load.audio('music', 'sound/gameplay.mp3');
 };
 function mycreate1() {
+  gamesound = this.sound.add('music');
+  gamesound.play({
+    volume: 0.5,
+    loop: true
+  });
   this.add.image(500, 400, 'grassland');
-
+  opentune.pause();
   platforms = this.physics.add.staticGroup();
 
   platforms.create(490, 825, 'ground').setScale(4).refreshBody();
@@ -126,8 +145,10 @@ function mycreate1() {
   platforms.create(750, 200, 'ground');
   platforms.create(250, 250, 'ground');
   platforms.create(100, 550, 'ground');
-
+  hopping = this.sound.add('hop');
+  eat = this.sound.add('eat');
   bunny = this.physics.add.sprite(250, 600, 'brownbunny');
+  birdcry = this.sound.add('cry');
 
   bunny.setBounce(0.2);
   bunny.setCollideWorldBounds(true);
@@ -184,13 +205,17 @@ this.physics.add.collider(bunny, bird, hitBunny, null, this);
   this.physics.pause();
   //console.log('game over');
   this.scene.start('scene4');
+  gamesound.pause();
 }
   
 
 function collectFruit (bunny, star)
 {
     star.disableBody(true, true);
-
+    eat.play({
+      volume: 2,
+      loop: false,
+    })
     //  Add and update the score
     score += 10;
     scoreText.setText('Score: ' + score);
@@ -211,10 +236,15 @@ function collectFruit (bunny, star)
         birds.setCollideWorldBounds(true);
         birds.setVelocity(Phaser.Math.Between(-200, 200), 20);
         birds.allowGravity = false;
+        birdcry.play({
+          volume: 1,
+          loop: false
+        })
 
     }
   if (score === 500){
     this.scene.start('scene3');
+    gamesound.pause();
   }
 }
   
@@ -227,18 +257,21 @@ function myupdate1() {
     bunny.setVelocityX(-160);
 
     bunny.anims.play('left', true);
+  hopping.play();
 }
 else if (cursors.right.isDown)
 {
     bunny.setVelocityX(160);
 
     bunny.anims.play('right', true);
+  hopping.play();
 }
 else
 {
     bunny.setVelocityX(0);
 
     bunny.anims.play('turn');
+  hopping.play();
 }
 
 if (cursors.up.isDown && bunny.body.touching.down)
@@ -255,9 +288,15 @@ if (cursors.up.isDown && bunny.body.touching.down)
 //Winner Scene
 function preend() {
   this.load.image('winner', 'asset/Winner-Scene.jpg');
+  this.load.audio('win', 'sound/winner.wav');
 };
 function createend() {
   this.add.image(500, 400, 'winner');
+  winnersound = this.sound.add('win');
+  winnersound.play({
+    volume: 1,
+    loop: false
+  })
     
   
   spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -272,11 +311,17 @@ function updateend() {
   }
 }
 
-
+//Game over Scene
 function preover() {
   this.load.image('over', 'asset/gameover.jpg');
+  this.load.audio('lost', 'sound/sadlost.wav');
 };
 function createover() {
+  lostsound = this.sound.add('lost');
+  lostsound.play({
+    volume: 1,
+    loop: false
+  })
   this.add.image(500, 400, 'over');
   console.log('game scene');
   spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
